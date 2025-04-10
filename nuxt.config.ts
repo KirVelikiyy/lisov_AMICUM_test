@@ -46,4 +46,9 @@ export default defineNuxtConfig({
       styles: true,
     },
   },
+  fonts: {
+    families: [
+      { name: 'Roboto', provider: 'google' }
+    ]
+  }
 })

@@ -12,6 +12,7 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "moment": "^2.30.1",
     "nuxt": "^3.16.2",
     "vue": "latest",
     "vuetify": "^3.7.3"
