@@ -9,7 +9,7 @@
 
 <img src="readme/screenshot1.png" />
 <img src="readme/screenshot2.png" />
-
+<img src="readme/presentation.gif" />
 [ссылка на ТЗ](https://www.figma.com/design/HTvNijthka0JxNP9pPZDbv/%D0%A2%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D1%8B%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D1%8F?node-id=351-382)
 
 ## Технологический стек
