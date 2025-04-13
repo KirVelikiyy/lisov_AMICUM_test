@@ -1,7 +1,7 @@
 <template>
    <div 
-      ref="picker"
       v-show="value" 
+      ref="picker"
       class="picker" 
    >
       <div class="picker-header">
@@ -20,7 +20,7 @@
                @click.stop="incrementMonth" 
             />
          </div>
-         <div @click="setCurrentView('years')">
+         <div class="cursor-pointer" @click="setCurrentView('years')">
             <v-icon 
                icon="mdi-menu-left" 
                size="small"
@@ -54,7 +54,7 @@
                   class="day-container"
                >
                   <button
-                     :ref="el => { if (el) daysRef[day] = el }"
+                     :ref="el => { if (el && day) daysRef[day] = el }"
                      class="date"
                      :class="{empty: !day}"
                      @click="day ? setDate('day', day) : null"
@@ -95,27 +95,44 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, type ComponentPublicInstance } from 'vue';
+import type { ILocalDate } from '~/types'
+
 interface IProps {
    value?: boolean,
+   currentDate?: string
 }
 
 type TLocalDateKey = 'day'|'monthIndex'|'year';
 
-interface ILocalDate {
-   day: number|null,
-   monthIndex: number,
-   year: number
+const { value = false, currentDate = '' } = defineProps<IProps>();
+
+function parseCurrentDate(date: string) {
+   if (!date) {
+      return;
+   }
+   const [ year, month, day ] = date.split('-')
+   localDate.day = Number(day);
+   localDate.monthIndex = Number(month) - 1;
+   localDate.year = Number(year);
+   selectedDate.value = { ...localDate };
 }
 
-withDefaults(defineProps<IProps>(), {
-   value: false
-})
+watch(
+   () => value,
+   (newValue) => {
+      if (!newValue) {
+         return;
+      }
+      setCurrentView('days');
+      parseCurrentDate(currentDate);
+   }
+);
 
 const emit = defineEmits<{
    (e: 'submit', date: ILocalDate): void;
    (e: 'closed'): void;
-}>()
+}>();
 
 const picker = ref(null);
 defineExpose({ picker });
@@ -238,9 +255,9 @@ const setUpDates = () => {
    }
 }
 
-const daysRef = ref<HTMLElement[]>([]);
-const monthesRef = ref<HTMLElement[]>([]);
-const yearsRef = ref<HTMLElement[]>([]);
+const daysRef = ref<(Component | ComponentPublicInstance)[]>([]);
+const monthesRef = ref<(Component | ComponentPublicInstance)[]>([]);
+const yearsRef = ref<(Component | ComponentPublicInstance)[]>([]);
 
 const refsByKeys = {
    day: daysRef,
@@ -252,7 +269,7 @@ function markSelectedDate(key: TLocalDateKey) {
    const resource = key === 'day' ? selectedDate.value : localDate;
    setTimeout(() => {
       if (typeof (resource[key]) === 'number') {
-         const component = refsByKeys[key]?.value[resource[key]];
+         const component = refsByKeys[key]?.value[resource[key]] as HTMLElement;
          component?.classList.add('selected-date')
       }
    }, 0);
@@ -261,7 +278,7 @@ function markSelectedDate(key: TLocalDateKey) {
 function unmarkSelectedDate(key: TLocalDateKey) {
    const resource = key === 'day' ? selectedDate.value : localDate;
    if (typeof (resource[key]) === 'number') {
-      const component = refsByKeys[key]?.value[resource[key]];
+      const component = refsByKeys[key]?.value[resource[key]] as HTMLElement;
       component?.classList.remove('selected-date')
    }
 }
@@ -272,15 +289,22 @@ const currentView = ref<TCurrentView>('days');
 
 function setCurrentView(value: TCurrentView) {
    currentView.value = value;
-   const map = {
+   const currentViewAsLocalDateKey = {
       days: "day",
       monthes: "monthIndex",
       years: "year"
    }
-   if (map[value] === 'day' && isSelectedDateMonthOpen()) {
-      markSelectedDate(map[value]);
-   } else if (map[value] !== 'day') {
-      markSelectedDate(map[value]);
+
+   const localDateKey = currentViewAsLocalDateKey[value] as TLocalDateKey;
+   
+   if (localDateKey === 'year') {
+      updateYears();
+   }
+
+   if (localDateKey === 'day' && isSelectedDateMonthOpen()) {
+      markSelectedDate(localDateKey);
+   } else if (localDateKey !== 'day') {
+      markSelectedDate(localDateKey);
    }
 }
 
@@ -302,10 +326,15 @@ onMounted(() => {
 .picker {
    width: 268px;
    height: 340px;
-   border: 1.5px #6F8BB7 solid;
+   border: 1.5px rgb(var(--v-theme-surface-variant)) solid;
 
    font-family: Roboto;
    font-size: 12px;
+
+   position: absolute;
+   top: 4rem;
+
+   z-index: 50;
 }
 .picker-header {
    display: flex;
@@ -320,11 +349,11 @@ onMounted(() => {
 
    outline-width: 1px;
    outline-style: solid;
-   outline-color: #647CAB;
+   outline-color: rgb(var(--v-theme-surface-variant));
 
    color: #6484C5;
 
-   background-color: #F2F4FD;
+   background-color: rgb(var(--v-theme-background));
 
    display: flex;
    justify-content: space-between;
@@ -343,6 +372,8 @@ onMounted(() => {
    display: flex;
    flex-direction: column;
    gap: 10px;
+
+   background-color: rgb(var(--v-theme-background));
 }
 .days-of-week {
    display: flex;
@@ -389,7 +420,7 @@ onMounted(() => {
 .date:focus,
 .date:active,
 .selected-date {
-   background-color: #6F7DAD;
+   background-color: rgb(var(--v-theme-primary));
    color: white;
 }
 .empty {
@@ -409,23 +440,23 @@ onMounted(() => {
 .confirm {
    width: 50%;
    height: 100%;
-   background-color: #6484C5;
+   background-color: rgb(var(--v-theme-primary));
    color: white;
    font-weight: 400;
 
    outline-width: 1px;
    outline-style: solid;
-   outline-color: #647CAB;
+   outline-color: rgb(var(--v-theme-surface-variant));
 }
 .cancel {
    width: 50%;
    height: 100%;
-   background-color: #D9DBE1;
+   background-color: rgb(var(--v-theme-background));
    color: #687793;
    font-weight: 400;
 
    outline-width: 1px;
    outline-style: solid;
-   outline-color: #647CAB;
+   outline-color: rgb(var(--v-theme-surface-variant));
 }
 </style>

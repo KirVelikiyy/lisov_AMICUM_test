@@ -12,7 +12,14 @@
          type="datetime-local"
          :rules="[required]"
       />
-
+   </div>
+   <div class="stand-container">
+      <DateTimeInput 
+         class="field"
+         label="Выберите дату и время"
+         :rules="[required]"
+         disabled
+      />
    </div>
 </template>
 
